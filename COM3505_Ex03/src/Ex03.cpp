@@ -48,7 +48,7 @@ void setup() {
   // Start the traffic light sequence with green on
   digitalWrite(green, HIGH);
 }
-
+  
 
 // ---------------------------------------------------------------------------
 // loop03()

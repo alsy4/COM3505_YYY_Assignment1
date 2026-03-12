@@ -19,6 +19,11 @@ const int serverPort = 9194;
 const char* myEmail = "nasshaari1@sheffield.ac.uk";
 const char* laptopMac = "d8:f3:bc:58:30:07";
 
+const int RED_LED_PIN = 6;
+const int YELLOW_LED_PIN = 9;
+const int GREEN_LED_PIN = 12;
+
+
 
 // ---------------- Networking objects ----------------
 // Client used to connect to the external server
@@ -28,13 +33,27 @@ WiFiClient client;
 WebServer webServer(80);
 
 
+void blinkLED() {
+
+    Serial.printf("setting LED_PIN HIGH HIGH...\n");
+    digitalWrite(RED_LED_PIN, HIGH);
+    digitalWrite(YELLOW_LED_PIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, HIGH);
+    delay(1000);   // blocking delay (what happens if the switch is pressed now?)
+
+    Serial.printf("setting LED_PIN LOW...\n");
+    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(YELLOW_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, LOW);
+    delay(1000);
+}
 
 // ------------------------------------------------------------
 // Connect ESP32 to Wi-Fi
 // ------------------------------------------------------------
 void connectWiFi()
 {
-    Serial.print("Connecting to Wi-Fi");
+    Serial. print("Connecting to Wi-Fi");
 
     WiFi.begin(wifiSsid, wifiPassword);
 
@@ -140,43 +159,48 @@ void sendGetRequest()
 
 
 
+
 // ------------------------------------------------------------
 // Arduino Setup
 // Runs once at startup
 // ------------------------------------------------------------
 void setup()
 {
+    pinMode(RED_LED_PIN, OUTPUT);
+    pinMode(YELLOW_LED_PIN, OUTPUT);
+    pinMode(GREEN_LED_PIN, OUTPUT);
+
     Serial.begin(115200);
     delay(3000);
 
     // Connect to Wi-Fi network
-    connectWiFi();
+    // connectWiFi();
 
-    // Connect to server
-    if (!connectServer())
-    {
-        Serial.println("Could not connect to server, restarting...");
-        delay(10000);
-        ESP.restart();
-    }
+    // // Connect to server
+    // if (!connectServer())
+    // {
+    //     Serial.println("Could not connect to server, restarting...");
+    //     delay(10000);
+    //     ESP.restart();
+    // }
 
-    // Send the GET request
-    sendGetRequest();
+    // // Send the GET request
+    // sendGetRequest();
 
 
-    // --------------------------------------------------------
-    // Start local web server
-    // --------------------------------------------------------
-    webServer.on("/", []()
-    {
-        webServer.send(200,
-                       "text/html",
-                       "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
-    });
+    // // --------------------------------------------------------
+    // // Start local web server
+    // // --------------------------------------------------------
+    // webServer.on("/", []()
+    // {
+    //     webServer.send(200,
+    //                    "text/html",
+    //                    "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
+    // });
 
-    webServer.begin();
+    // webServer.begin();
 
-    Serial.println("Local web server started");
+    // Serial.println("Local web server started");
 }
 
 
@@ -188,9 +212,10 @@ void setup()
 void loop()
 {
     // Handle incoming browser requests
-    webServer.handleClient();
-    Serial.print("Wifi IP Address: ");
-    Serial.println(WiFi.localIP());
-    delay(2000);
+    // webServer.handleClient();
+    // Serial.print("Wifi IP Address: ");
+    // Serial.println(WiFi.localIP());
+    blinkLED();
     // Remote server request only runs once in setup()
+
 }   
