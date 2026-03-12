@@ -174,33 +174,33 @@ void setup()
     delay(3000);
 
     // Connect to Wi-Fi network
-    // connectWiFi();
+    connectWiFi();
 
-    // // Connect to server
-    // if (!connectServer())
-    // {
-    //     Serial.println("Could not connect to server, restarting...");
-    //     delay(10000);
-    //     ESP.restart();
-    // }
+    // Connect to server
+    if (!connectServer())
+    {
+        Serial.println("Could not connect to server, restarting...");
+        delay(10000);
+        ESP.restart();
+    }
 
-    // // Send the GET request
-    // sendGetRequest();
+    // Send the GET request
+    sendGetRequest();
 
 
-    // // --------------------------------------------------------
-    // // Start local web server
-    // // --------------------------------------------------------
-    // webServer.on("/", []()
-    // {
-    //     webServer.send(200,
-    //                    "text/html",
-    //                    "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
-    // });
+    // --------------------------------------------------------
+    // Start local web server
+    // --------------------------------------------------------
+    webServer.on("/", []()
+    {
+        webServer.send(200,
+                       "text/html",
+                       "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
+    });
 
-    // webServer.begin();
+    webServer.begin();
 
-    // Serial.println("Local web server started");
+    Serial.println("Local web server started");
 }
 
 
@@ -212,9 +212,9 @@ void setup()
 void loop()
 {
     // Handle incoming browser requests
-    // webServer.handleClient();
-    // Serial.print("Wifi IP Address: ");
-    // Serial.println(WiFi.localIP());
+    webServer.handleClient();
+    Serial.print("Wifi IP Address: ");
+    Serial.println(WiFi.localIP());
     blinkLED();
     // Remote server request only runs once in setup()
 
