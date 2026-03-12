@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>COM3505 IoT - ESP32 Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 20px;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        .section {
+            background-color: #fff;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data {
+            font-weight: bold;
+            color: #d9534f;
+        }
+        p.note {
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>COM3505 Internet of Things - Exercise 7 & 8</h1>
+
+    <div class="section">
+        <h2>ESP32 Submission Data</h2>
+        <p>Email: <span class="data">po.yang@sheffield.ac.uk</span></p>
+        <p>MAC Address: <span class="data">DC:54:75:C6:DE:5C</span></p>
+        <p class="note">This data is sent by the ESP32 to the server via GET request.</p>
+    </div>
+
+    <div class="section">
+        <h2>Exercise Details</h2>
+        <ul>
+            <li><strong>Ex07:</strong> Utilities for generating HTML from ESP32, templating pages dynamically.</li>
+            <li><strong>Ex08:</strong> ESP32 as a web client sending email & MAC address to the server.</li>
+            <li><strong>Ex09:</strong> Connecting ESP32 to arbitrary Wi-Fi networks and allowing user provisioning.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Server Response</h2>
+        <p class="note">The server should respond with a confirmation message when the ESP32 sends data.</p>
+        <pre id="server-response">Waiting for ESP32...</pre>
+    </div>
+
+    <script>
+        // Optional: dynamically update server response
+        async function fetchResponse() {
+            try {
+                const response = await fetch('/Index.html?email=nasshaari1@sheffield.ac.uk&mac=DC:54:75:CD:B1:E0');
+                if (response.ok) {
+                    const text = await response.text();
+                    document.getElementById('server-response').textContent = text;
+                }
+                else {
+                    document.getElementById('server-response').textContent = "aloma";
+                }
+            } catch(e) {
+                document.getElementById('data-display').textContent = "Server Offline";
+                document.getElementById('data-display').style.color = "red";
+            }
+        }
+
+        setInterval(fetchResponse, 3000); // refresh every 3 seconds
+        window.onload = fetchResponse;
+    </script>
+</body>
+</html>
