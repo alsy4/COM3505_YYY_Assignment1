@@ -7,13 +7,33 @@
 
 // Local HTTP server running on port 80
 WebServer webServer(80);
+const int BUTTON_PIN = 5;
+ 
+ 
+ enum LedState {
+    LED_FLICKER,
+    LED_SOLID
+};
+LedState currentLedState = LED_FLICKER;
 
+
+// ------------------------------------------------------------
+// Check button state and latch to solid mode if pressed
+// ------------------------------------------------------------
+void handleButton() {
+    if (digitalRead(BUTTON_PIN) == LOW) {
+        Serial.println("Button pressed — latching to solid mode.");
+        currentLedState = LED_SOLID;
+        delay(50); // debounce
+    }
+}
+ 
 
 void setup() {
     pinMode(RED_LED_PIN,    OUTPUT);
     pinMode(YELLOW_LED_PIN, OUTPUT);
     pinMode(GREEN_LED_PIN,  OUTPUT);
-
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
     Serial.begin(115200);
     delay(3000);
 
@@ -51,9 +71,17 @@ void loop() {
     // Handle incoming browser requests
     webServer.handleClient();
 
-    Serial.print("Wifi IP Address: ");
-    Serial.println(WiFi.localIP());
+    // Serial.print("Wifi IP Address: ");
+    // Serial.println(WiFi.localIP());
 
-    chaseLED();
+    handleButton();
+    switch (currentLedState) {
+        case LED_FLICKER:
+            flickerLED();
+            break;
+        case LED_SOLID:
+            solidLED();
+            break;
+    }
 
 }
