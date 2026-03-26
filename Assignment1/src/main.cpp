@@ -23,6 +23,11 @@ const int RED_LED_PIN = 6;
 const int YELLOW_LED_PIN = 9;
 const int GREEN_LED_PIN = 12;
 
+void blinkLED();
+void chaseLED();
+void flickerLED();
+void solidLED();
+
 
 
 // ---------------- Networking objects ----------------
@@ -30,8 +35,15 @@ const int GREEN_LED_PIN = 12;
 WiFiClient client;
 
 // Local HTTP server running on port 80
-WebServer webServer(80);
+WebServer webServer(80);    
 
+void solidLED() {
+    Serial.printf("Setting LED solid");
+
+    digitalWrite(RED_LED_PIN, LOW);
+    digitalWrite(YELLOW_LED_PIN, LOW);
+    digitalWrite(GREEN_LED_PIN, HIGH);
+}
 
 void blinkLED() {
 
@@ -47,6 +59,59 @@ void blinkLED() {
     digitalWrite(GREEN_LED_PIN, LOW);
     delay(1000);
 }
+
+void chaseLED() {
+    const int pins[] = { RED_LED_PIN, YELLOW_LED_PIN, GREEN_LED_PIN };
+    const int numPins = 3;
+    const int chaseDelay = 200;
+
+    Serial.println("Starting LED chase pattern...");
+
+    // Chase forward
+    for (int i = 0; i < numPins; i++) {
+        digitalWrite(pins[i], HIGH);
+        delay(chaseDelay);
+        digitalWrite(pins[i], LOW);
+    }
+
+    // Chase backward
+    for (int i = numPins - 1; i >= 0; i--) {
+        digitalWrite(pins[i], HIGH);
+        delay(chaseDelay);
+        digitalWrite(pins[i], LOW);
+    }
+}
+
+void flickerLED() {
+    const int pins[] = { RED_LED_PIN, YELLOW_LED_PIN, GREEN_LED_PIN };
+    const int numPins = 3;
+    const int flickerDuration = 2000;   // Total flicker duration in ms
+    const int minDelay = 30;            // Minimum flicker interval in ms
+    const int maxDelay = 150;           // Maximum flicker interval in ms
+
+    Serial.println("Starting random LED flicker...");
+
+    unsigned long startTime = millis();
+
+    while (millis() - startTime < flickerDuration) {
+        // Pick a random LED
+        int randomPin = pins[random(0, numPins)];
+
+        // Flicker it ON then OFF
+        digitalWrite(randomPin, HIGH);
+        delay(random(minDelay, maxDelay));
+        digitalWrite(randomPin, LOW);
+        delay(random(minDelay, maxDelay));
+    }
+
+    // Ensure all LEDs are off after flickering
+    for (int i = 0; i < numPins; i++) {
+        digitalWrite(pins[i], random(0,2));
+    }
+
+    Serial.println("Flicker complete.");
+}
+
 
 // ------------------------------------------------------------
 // Connect ESP32 to Wi-Fi
@@ -174,31 +239,31 @@ void setup()
     delay(3000);
 
     // Connect to Wi-Fi network
-    connectWiFi();
+    // connectWiFi();
 
-    // Connect to server
-    if (!connectServer())
-    {
-        Serial.println("Could not connect to server, restarting...");
-        delay(10000);
-        ESP.restart();
-    }
+    // // Connect to server
+    // if (!connectServer())
+    // {
+    //     Serial.println("Could not connect to server, restarting...");
+    //     delay(10000);
+    //     ESP.restart();
+    // }
 
-    // Send the GET request
-    sendGetRequest();
+    // // Send the GET request
+    // sendGetRequest();
 
 
-    // --------------------------------------------------------
-    // Start local web server
-    // --------------------------------------------------------
-    webServer.on("/", []()
-    {
-        webServer.send(200,
-                       "text/html",
-                       "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
-    });
+    // // --------------------------------------------------------
+    // // Start local web server
+    // // --------------------------------------------------------
+    // webServer.on("/", []()
+    // {
+    //     webServer.send(200,
+    //                    "text/html",
+    //                    "<h1>ESP32 Ex08 Home Test</h1><p>Local page works!</p>");
+    // });
 
-    webServer.begin();
+    // webServer.begin();
 
     Serial.println("Local web server started");
 }
@@ -215,7 +280,7 @@ void loop()
     webServer.handleClient();
     Serial.print("Wifi IP Address: ");
     Serial.println(WiFi.localIP());
-    blinkLED();
+    flickerLED();
     // Remote server request only runs once in setup()
 
 }   
