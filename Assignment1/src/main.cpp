@@ -4,10 +4,11 @@
 
 #include "LED.h"
 #include "Wifi_Connect.h"
+#include "Temperature.h"
 
 // Local HTTP server running on port 80
 WebServer webServer(80);
-const int BUTTON_PIN = 5;
+const int BUTTON_PIN = 6;
  
  
  enum LedState {
@@ -34,6 +35,12 @@ void setup() {
     pinMode(YELLOW_LED_PIN, OUTPUT);
     pinMode(GREEN_LED_PIN,  OUTPUT);
     pinMode(BUTTON_PIN, INPUT_PULLUP);
+    // pinMode(TEMP_PIN, INPUT);
+    
+    analogReadResolution(12);
+
+    // Increase ADC input range for better measurement
+    analogSetPinAttenuation(TEMP_PIN, ADC_11db);
     Serial.begin(115200);
     delay(3000);
 
@@ -63,16 +70,18 @@ void setup() {
     Serial.println("Local web server started");
 }
 
-
-// ------------------------------------------------------------
-// Arduino Loop — runs continuously after setup
-// ------------------------------------------------------------
 void loop() {
     // Handle incoming browser requests
     webServer.handleClient();
 
     // Serial.print("Wifi IP Address: ");
     // Serial.println(WiFi.localIP());
+
+    static unsigned long lastTempMs = 0;
+    if (millis() - lastTempMs >= 2000) {
+        printTemperature();
+        lastTempMs = millis();
+    }
 
     handleButton();
     switch (currentLedState) {
