@@ -9,23 +9,34 @@
 // Local HTTP server running on port 80
 WebServer webServer(80);
 const int BUTTON_PIN = 6;
- 
- 
- enum LedState {
-    LED_FLICKER,
-    LED_SOLID
-};
-LedState currentLedState = LED_FLICKER;
 
+enum LedState {
+    LED_BLINK,
+    LED_FLICKER,
+    LED_SOLID,
+    LED_CHASE
+};
+
+volatile LedState currentLedState = LED_BLINK;
+volatile bool buttonPressed = false;
 
 // ------------------------------------------------------------
-// Check button state and latch to solid mode if pressed
+// ISR: flag the button press immediately (runs during any delay)
+// ------------------------------------------------------------
+void IRAM_ATTR buttonISR() {
+    buttonPressed = true;
+}
+
+// ------------------------------------------------------------
+// Process the button flag — only acts during LED_FLICKER
 // ------------------------------------------------------------
 void handleButton() {
-    if (digitalRead(BUTTON_PIN) == LOW) {
-        Serial.println("Button pressed — latching to solid mode.");
-        currentLedState = LED_SOLID;
-        delay(50); // debounce
+    if (buttonPressed) {
+        buttonPressed = false;
+        if (currentLedState == LED_FLICKER || currentLedState == LED_CHASE) {
+            Serial.println("Button pressed — switching to blink.");
+            currentLedState = LED_BLINK;
+        }
     }
 }
  
@@ -67,10 +78,18 @@ void setup() {
     // });
     // webServer.begin();
 
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
+
     Serial.println("Local web server started");
 }
 
 void loop() {
+    // Button test
+    if (buttonPressed) {
+        buttonPressed = false;
+        Serial.println("Button pressed!");
+    }
+
     // Handle incoming browser requests
     webServer.handleClient();
 
@@ -83,14 +102,46 @@ void loop() {
         lastTempMs = millis();
     }
 
-    handleButton();
+
+    // Temperature exceeds threshold: switch to chase immediately, then flicker after 5s
+    static unsigned long tempExceedTime = 0;
+    if (currentLedState == LED_BLINK || currentLedState == LED_CHASE) {
+        float tempC = readTemperatureC();
+        if (tempC > TEMP_THRESHOLD) {
+            if (tempExceedTime == 0) {
+                tempExceedTime = millis();
+                currentLedState = LED_CHASE;
+                Serial.println("Temperature exceeded threshold — switching to chase, 5s timer started.");
+            } else if (currentLedState == LED_CHASE && millis() - tempExceedTime >= 5000) {
+                Serial.println("5s elapsed — switching to flicker.");
+                currentLedState = LED_FLICKER;
+                tempExceedTime = 0;
+            }
+        } else {
+            if (tempExceedTime != 0) {
+                Serial.println("Temperature dropped below threshold — timer reset, back to blink.");
+                currentLedState = LED_BLINK;
+                tempExceedTime = 0;
+            }
+        }
+    }
+
     switch (currentLedState) {
+        case LED_BLINK:
+            blinkLED();
+            break;
         case LED_FLICKER:
             flickerLED();
+            handleButton();
             break;
         case LED_SOLID:
             solidLED();
             break;
+        case LED_CHASE:
+            chaseLED();
+            handleButton();
+            break;
     }
+    
 
 }
