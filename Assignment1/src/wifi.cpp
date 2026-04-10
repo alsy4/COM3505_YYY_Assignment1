@@ -1,16 +1,16 @@
 #include "Wifi_Connect.h"
 
 // ---------------- Wi-Fi credentials ----------------
-const char* wifiSsid     = "Bon Clay";
-const char* wifiPassword = "passwords";
+const char* wifiSsid     = "darwin";
+const char* wifiPassword = "danish112233";
 
 // ---------------- Server information ----------------
-const char* serverHost = "172.20.10.12";
+const char* serverHost = "172.20.10.10";
 const int   serverPort = 9194;
 
 // ---------------- Student identification ----------------
-const char* myEmail   = "nasshaari1@sheffield.ac.uk";
-const char* laptopMac = "d8:f3:bc:58:30:07";
+const char* myEmail   = "mdbmohdasri1@sheffield.ac.uk";
+const char* laptopMac = "F0-A7-31-4B-C0-EE";
 
 // Shared WiFi client
 WiFiClient client;
