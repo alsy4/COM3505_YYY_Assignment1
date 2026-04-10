@@ -1,5 +1,5 @@
 <h1 align="center">
-  downshift
+  PerfectNoodle
   <br>
   <img src="https://github.com/alsy4/COM3505_YYY_Assignment1/blob/main/other/nooodle.png" alt="downshift logo" title="downshift logo" width="300">
   <br>
@@ -62,4 +62,4 @@ python server.py
 Remember to Bootload your ESP32 by holding `Boot` and pressing `Reset` button first.
 
 ## Open the web browser
-Now, you can see the webpage in the browser through this: [text](http://localhost:9194)
+Now, you can see the webpage in the browser through this: [http://localhost:9194](http://localhost:9194)
