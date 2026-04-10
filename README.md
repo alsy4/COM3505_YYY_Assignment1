@@ -9,3 +9,13 @@
 
 COOKING SETTING
 The --- will be placed near the stove. The main function of this device would be to detect the change around the stove. There will be 4 situations that would be trigger 4 different patterns. For this project, we choose the situation where we cook instant noodle.
+
+
+<h1 align="center">
+  downshift
+  <br>
+  <img src="https://raw.githubusercontent.com/downshift-js/downshift/master/other/public/logo/downshift.svg" alt="downshift logo" title="downshift logo" width="300">
+  <br>
+</h1>
+<p align="center" style="font-size: 1.2rem;">Primitives to build simple, flexible, WAI-ARIA compliant React
+autocomplete, combobox or select dropdown components.</p>
