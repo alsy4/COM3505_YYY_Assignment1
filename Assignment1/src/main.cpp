@@ -24,6 +24,8 @@ unsigned long lastTempRead = 0;
 unsigned long lastDataSend = 0;
 unsigned long tempExceedTime = 0;
 
+void sendDataToFlaskServer();
+
 // ------------------------------------------------------------
 // ISR: flag the button press immediately
 // ------------------------------------------------------------
@@ -32,17 +34,24 @@ void IRAM_ATTR buttonISR() {
 }
 
 // ------------------------------------------------------------
-// Process the button flag - only acts during LED_FLICKER
+// Process the button flag - full reset to NORMAL (SOLID green)
+// regardless of current state, and push the new state to Flask
+// immediately so the dashboard reflects the reset without
+// waiting for the next periodic send.
 // ------------------------------------------------------------
 void handleButton() {
-    if (buttonPressed) {
-        buttonPressed = false;
-        if (currentLedState == LED_FLICKER || currentLedState == LED_CHASE) {
-            Serial.println("Button pressed — switching to blink.");
-            currentLedState = LED_BLINK;
-            tempExceedTime = 0;
-        }
-    }
+    if (!buttonPressed) return;
+    buttonPressed = false;
+
+    Serial.println("Button pressed — resetting to NORMAL (SOLID).");
+    currentLedState = LED_SOLID;
+    tempExceedTime = 0;
+
+    ledClear();
+    ledFlush();
+
+    sendDataToFlaskServer();
+    lastDataSend = millis();
 }
 
 // ----------------------------------------
@@ -209,11 +218,6 @@ void setup() {
 }
 
 void loop() {
-    if (buttonPressed) {
-        buttonPressed = false;
-        Serial.println("Button pressed!");
-    }
-
     unsigned long currentTime = millis();
     
     // Handle incoming browser requests
