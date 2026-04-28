@@ -1,11 +1,11 @@
 #include "Wifi_Connect.h"
 
 // ---------------- Wi-Fi credentials ----------------
-const char* wifiSsid     = "darwin";
-const char* wifiPassword = "danish112233";
+const char* wifiSsid     = "Bon Clay";
+const char* wifiPassword = "passwords";
 
 // ---------------- Server information ----------------
-const char* serverHost = "172.20.10.10";
+const char* serverHost = "172.20.10.12";
 const int   serverPort = 9194;
 
 // ---------------- Student identification ----------------
