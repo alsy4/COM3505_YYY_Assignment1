@@ -209,7 +209,6 @@ void setup() {
 }
 
 void loop() {
-    // Button test
     if (buttonPressed) {
         buttonPressed = false;
         Serial.println("Button pressed!");

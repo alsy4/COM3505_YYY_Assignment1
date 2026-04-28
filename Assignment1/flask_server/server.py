@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, jsonify
 from datetime import datetime
 import json
 
@@ -17,7 +17,6 @@ HTML_TEMPLATE = '''
 <html>
 <head>
     <title>PerfectNoodle - Kitchen Safety Monitor</title>
-    <meta http-equiv="refresh" content="2">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -111,21 +110,21 @@ HTML_TEMPLATE = '''
         <p>Real-time stove temperature</p>
         
         <div class="temp">
-            {{ temperature }}<span class="temp-unit">°C</span>
+            <span id="temp">{{ temperature }}</span><span class="temp-unit">°C</span>
         </div>
-        
-        <div class="status {{ status_class }}">
+
+        <div id="status" class="status {{ status_class }}">
             {{ status_text }}
         </div>
-        
+
         <div class="info">
-            <div class="info-item"><strong>Current LED Pattern:</strong> {{ state }}</div>
+            <div class="info-item"><strong>Current LED Pattern:</strong> <span id="state">{{ state }}</span></div>
             <div class="info-item"><strong>Safety Threshold:</strong> 17.0°C</div>
-            <div class="info-item"><strong>Student Email:</strong> {{ email }}</div>
+            <div class="info-item"><strong>Student Email:</strong> <span id="email">{{ email }}</span></div>
         </div>
-        
+
         <div class="timestamp">
-            Last update: {{ last_update }}
+            Last update: <span id="last-update">{{ last_update }}</span>
         </div>
         
         <div style="margin-top: 20px; font-size: 12px; color: #999;">
@@ -135,32 +134,44 @@ HTML_TEMPLATE = '''
             <p>Press and Hold button on ESP32 to reset from emergency</p>
         </div>
     </div>
+
+    <script>
+    async function refresh() {
+        try {
+            const r = await fetch('/api/data', {cache: 'no-store'});
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('temp').textContent = Number(d.temperature).toFixed(1);
+            document.getElementById('state').textContent = (d.state || '').replace('LED_', '');
+            document.getElementById('email').textContent = d.email;
+            document.getElementById('last-update').textContent = d.last_update;
+            const status = document.getElementById('status');
+            status.className = 'status ' + d.status_class;
+            status.textContent = d.status_text;
+        } catch (e) { /* keep last good values */ }
+    }
+    setInterval(refresh, 1000);
+    window.addEventListener('load', refresh);
+    </script>
 </body>
 </html>
 '''
 
+STATUS_BY_STATE = {
+    'LED_SOLID':   ('status-safe',     'SAFE - Normal Condition'),
+    'LED_BLINK':   ('status-warning',  'WARNING - Temperature Rising!'),
+    'LED_CHASE':   ('status-warning',  'ALERT - Reduce Heat!'),
+    'LED_FLICKER': ('status-critical', 'EMERGENCY - TURN OFF STOVE NOW!'),
+}
+
+def status_for(state):
+    return STATUS_BY_STATE.get(state, ('status-safe', 'Unknown State'))
+
 @app.route('/')
 def index():
     """Serve the main web page"""
-    # status and text based on LED state
-    state = sensor_data['state']
-    
-    if state == 'LED_SOLID':
-        status_class = 'status-safe'
-        status_text = 'SAFE - Normal Condition'
-    elif state == 'LED_BLINK':
-        status_class = 'status-warning'
-        status_text = 'WARNING - Temperature Rising!'
-    elif state == 'LED_CHASE':
-        status_class = 'status-warning'
-        status_text = 'ALERT - Reduce Heat!'
-    elif state == 'LED_FLICKER':
-        status_class = 'status-critical'
-        status_text = 'EMERGENCY - TURN OFF STOVE NOW!'
-    else:
-        status_class = 'status-safe'
-        status_text = 'Unknown State'
-    
+    status_class, status_text = status_for(sensor_data['state'])
+
     return render_template_string(
         HTML_TEMPLATE,
         temperature=round(sensor_data['temperature'], 1),
@@ -196,8 +207,13 @@ def receive_sensor_data():
 
 @app.route('/api/data')
 def get_api_data():
-    """JSON endpoint for potential AJAX use"""
-    return jsonify(sensor_data)
+    """JSON endpoint consumed by the dashboard's polling script."""
+    status_class, status_text = status_for(sensor_data['state'])
+    return jsonify({
+        **sensor_data,
+        'status_class': status_class,
+        'status_text': status_text,
+    })
 
 if __name__ == '__main__':
     print("Flask Server Starting...")
