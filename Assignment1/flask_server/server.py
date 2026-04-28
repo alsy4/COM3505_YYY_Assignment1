@@ -1,5 +1,6 @@
 from flask import Flask, render_template_string, request, jsonify
 from datetime import datetime
+from collections import deque
 import json
 
 app = Flask(__name__)
@@ -11,6 +12,9 @@ sensor_data = {
     "last_update": "--",
     "email": "--"
 }
+
+HISTORY_SIZE = 60
+temp_history = deque(maxlen=HISTORY_SIZE)  # entries: (label_str, temperature_float)
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
@@ -126,7 +130,11 @@ HTML_TEMPLATE = '''
         <div class="timestamp">
             Last update: <span id="last-update">{{ last_update }}</span>
         </div>
-        
+
+        <div style="margin: 20px 0;">
+            <canvas id="temp-chart" height="180"></canvas>
+        </div>
+
         <div style="margin-top: 20px; font-size: 12px; color: #999;">
             <p>How it works:</p>
             <p>Below 17°C: SOLID Green (Normal)</p>
@@ -135,7 +143,50 @@ HTML_TEMPLATE = '''
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
+    let tempChart = null;
+
+    function initChart() {
+        const ctx = document.getElementById('temp-chart').getContext('2d');
+        tempChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: [],
+                    borderColor: '#e64a19',
+                    backgroundColor: 'rgba(230, 74, 25, 0.15)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    tension: 0.25,
+                    fill: true,
+                }],
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 6, autoSkip: true } },
+                    y: { beginAtZero: false, title: { display: true, text: '°C' } },
+                },
+            },
+        });
+    }
+
+    async function refreshHistory() {
+        try {
+            const r = await fetch('/api/history', {cache: 'no-store'});
+            if (!r.ok) return;
+            const h = await r.json();
+            tempChart.data.labels = h.labels;
+            tempChart.data.datasets[0].data = h.values;
+            tempChart.update('none');
+        } catch (e) { /* keep last good chart */ }
+    }
+
     async function refresh() {
         try {
             const r = await fetch('/api/data', {cache: 'no-store'});
@@ -149,9 +200,11 @@ HTML_TEMPLATE = '''
             status.className = 'status ' + d.status_class;
             status.textContent = d.status_text;
         } catch (e) { /* keep last good values */ }
+        refreshHistory();
     }
+
     setInterval(refresh, 1000);
-    window.addEventListener('load', refresh);
+    window.addEventListener('load', () => { initChart(); refresh(); });
     </script>
 </body>
 </html>
@@ -191,16 +244,19 @@ def receive_sensor_data():
     email = request.args.get('email', type=str)
     
     if temperature is not None:
+        now = datetime.now().strftime("%H:%M:%S")
         sensor_data['temperature'] = temperature
-        sensor_data['last_update'] = datetime.now().strftime("%H:%M:%S")
-        
+        sensor_data['last_update'] = now
+
         if state:
             sensor_data['state'] = state
         if email:
             sensor_data['email'] = email
-        
+
+        temp_history.append((now, temperature))
+
         print(f"ESP32: {temperature}°C | State: {state} | Email: {email}")
-        
+
         return "OK", 200
     else:
         return "No temperature data", 400
@@ -213,6 +269,15 @@ def get_api_data():
         **sensor_data,
         'status_class': status_class,
         'status_text': status_text,
+    })
+
+# This will store the live temperature history (not stored locally)
+@app.route('/api/history')
+def get_api_history():
+    """Time-series buffer of the most recent ESP32 readings."""
+    return jsonify({
+        'labels': [t for t, _ in temp_history],
+        'values': [v for _, v in temp_history],
     })
 
 if __name__ == '__main__':
