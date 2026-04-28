@@ -147,9 +147,9 @@ void updatePatternByTemperature() {
 }
 
 void setup() {
-    pinMode(RED_LED_PIN,    OUTPUT);
-    pinMode(YELLOW_LED_PIN, OUTPUT);
-    pinMode(GREEN_LED_PIN,  OUTPUT);
+    ledInit();
+    ledClear();
+    ledFlush();
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     // pinMode(TEMP_PIN, INPUT);
     
