@@ -123,7 +123,7 @@ HTML_TEMPLATE = '''
 
         <div class="info">
             <div class="info-item"><strong>Current LED Pattern:</strong> <span id="state">{{ state }}</span></div>
-            <div class="info-item"><strong>Safety Threshold:</strong> 17.0°C</div>
+            <div class="info-item"><strong>Safety Threshold:</strong> 50.0°C</div>
             <div class="info-item"><strong>Student Email:</strong> <span id="email">{{ email }}</span></div>
         </div>
 
